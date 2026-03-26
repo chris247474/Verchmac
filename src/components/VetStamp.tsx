@@ -15,11 +15,11 @@ export default function VetStamp() {
     >
       <div
         style={{
-          border: "6px solid rgba(185, 28, 28, 0.18)",
+          border: "6px solid rgba(185, 28, 28, 0.28)",
           borderRadius: "8px",
           padding: "14px 28px",
           textAlign: "center",
-          color: "rgba(185, 28, 28, 0.18)",
+          color: "rgba(185, 28, 28, 0.28)",
           fontFamily: "'Arial Black', 'Arial Bold', sans-serif",
           letterSpacing: "0.05em",
           whiteSpace: "nowrap",
