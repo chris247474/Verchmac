@@ -64,7 +64,7 @@ unshakeable belief that every moment is a deployable moment.
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: process.env.EMAIL_FROM || "PMC Business <noreply@powermaccenter.com>",
+            from: process.env.EMAIL_FROM || "PMC Business <support@verchbot.com>",
             to: recipients,
             subject: `New ${inquiryType} inquiry from ${firstName} ${lastName} — ${organization}`,
             text: emailBody,
