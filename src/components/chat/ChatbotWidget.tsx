@@ -6,6 +6,52 @@ import { cn } from "@/lib/utils";
 import { CHATBOT_GREETING } from "@/lib/constants";
 import type { ChatMessage } from "@/types";
 
+function renderMarkdown(text: string) {
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let listBuffer: string[] = [];
+
+  const flushList = (key: string) => {
+    if (listBuffer.length > 0) {
+      elements.push(
+        <ul key={key} className="list-disc list-inside space-y-0.5 my-1">
+          {listBuffer.map((item, i) => (
+            <li key={i}>{renderInline(item)}</li>
+          ))}
+        </ul>
+      );
+      listBuffer = [];
+    }
+  };
+
+  const renderInline = (s: string): React.ReactNode => {
+    const parts = s.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**"))
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      if (part.startsWith("*") && part.endsWith("*"))
+        return <em key={i}>{part.slice(1, -1)}</em>;
+      return part;
+    });
+  };
+
+  lines.forEach((line, i) => {
+    const listMatch = line.match(/^[-*]\s+(.+)/);
+    if (listMatch) {
+      listBuffer.push(listMatch[1]);
+    } else {
+      flushList(`list-${i}`);
+      if (line.trim() === "") {
+        if (elements.length > 0) elements.push(<br key={`br-${i}`} />);
+      } else {
+        elements.push(<span key={i} className="block">{renderInline(line)}</span>);
+      }
+    }
+  });
+  flushList("list-end");
+  return <>{elements}</>;
+}
+
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -93,7 +139,7 @@ export default function ChatbotWidget() {
                     : "bg-brand-gray-50 text-brand-gray-900 rounded-bl-sm"
                 )}
               >
-                {msg.content}
+                {renderMarkdown(msg.content)}
               </div>
             ))}
             {isLoading && (
