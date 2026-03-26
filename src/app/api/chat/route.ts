@@ -17,81 +17,85 @@ const EDUCATION_RESPONSES: Record<string, string> = {
   default: "Thanks for your interest in our Apple education solutions! I can help with information about iPad and Mac deployments, MDM setup, teacher training, device financing, and more. For detailed pricing or custom solutions, I'd recommend speaking with one of our Education Specialists. Would you like to request a consultation at /contact?",
 };
 
+function getKeywordResponse(messages: { role: string; content: string }[]): string {
+  const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || "";
+
+  if (/^(hi|hello|hey|good\s*(morning|afternoon|evening))/i.test(lastMessage)) {
+    return "Hi there! Welcome to Power Mac Center Business. I can help with iPad and Mac deployments, MDM setup, teacher training, device financing, and more. What would you like to know?";
+  }
+
+  if (lastMessage.includes("consult") || lastMessage.includes("contact") || lastMessage.includes("talk to") || lastMessage.includes("speak")) {
+    return "You can request a consultation with our specialists at the Contact page. They can provide personalized recommendations, detailed pricing, and deployment planning for your institution.";
+  }
+
+  for (const [keyword, reply] of Object.entries(EDUCATION_RESPONSES)) {
+    if (keyword !== "default" && lastMessage.includes(keyword)) return reply;
+  }
+
+  return EDUCATION_RESPONSES.default;
+}
+
 async function callMiniMax(
   messages: { role: string; content: string }[]
 ): Promise<string> {
-  const res = await fetch(MINIMAX_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.MINIMAX_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MINIMAX_MODEL,
-      messages: [
-        { role: "system", content: CHATBOT_SYSTEM_PROMPT },
-        ...messages.map((m: { role: string; content: string }) => ({
-          role: m.role,
-          content: m.content,
-        })),
-      ],
-      max_tokens: 1024,
-      temperature: 0.7,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-  if (!res.ok) {
-    const errorBody = await res.text();
-    console.error("MiniMax API error:", res.status, errorBody);
-    throw new Error(`MiniMax API returned ${res.status}`);
+  try {
+    const res = await fetch(MINIMAX_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.MINIMAX_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MINIMAX_MODEL,
+        messages: [
+          { role: "system", content: CHATBOT_SYSTEM_PROMPT },
+          ...messages.map((m: { role: string; content: string }) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        ],
+        max_tokens: 512,
+        temperature: 0.7,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error("MiniMax API error:", res.status, errorBody);
+      throw new Error(`MiniMax API returned ${res.status}`);
+    }
+
+    const data = await res.json();
+    const raw: string =
+      data.choices?.[0]?.message?.content ||
+      "Sorry, I couldn't generate a response. Please try again.";
+    // Strip <think>...</think> blocks that some models include in responses
+    return raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = await res.json();
-  const raw: string =
-    data.choices?.[0]?.message?.content ||
-    "Sorry, I couldn't generate a response. Please try again.";
-  // Strip <think>...</think> blocks that some models include in responses
-  return raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 }
 
 export async function POST(request: Request) {
   try {
     const { messages } = await request.json();
 
-    // Use MiniMax if API key is configured
+    // Use MiniMax if API key is configured, fall back to keyword responses on error/timeout
     if (process.env.MINIMAX_API_KEY) {
-      const reply = await callMiniMax(messages);
-      return NextResponse.json({ message: reply });
-    }
-
-    // Fallback: keyword-based responses when no API key is set
-    const lastMessage =
-      messages[messages.length - 1]?.content?.toLowerCase() || "";
-
-    let response = EDUCATION_RESPONSES.default;
-    for (const [keyword, reply] of Object.entries(EDUCATION_RESPONSES)) {
-      if (keyword !== "default" && lastMessage.includes(keyword)) {
-        response = reply;
-        break;
+      try {
+        const reply = await callMiniMax(messages);
+        return NextResponse.json({ message: reply });
+      } catch (err) {
+        console.error("MiniMax failed, using keyword fallback:", err);
+        return NextResponse.json({ message: getKeywordResponse(messages) });
       }
     }
 
-    if (/^(hi|hello|hey|good\s*(morning|afternoon|evening))/i.test(lastMessage)) {
-      response =
-        "Hello! Welcome to Power Mac Center Business. I'm here to help you explore our Apple solutions for education. What would you like to know about? I can discuss iPad programs, Mac deployments, teacher training, device management, and more!";
-    }
-
-    if (
-      lastMessage.includes("consult") ||
-      lastMessage.includes("contact") ||
-      lastMessage.includes("talk to") ||
-      lastMessage.includes("speak")
-    ) {
-      response =
-        "Absolutely! You can request a consultation with our specialists at /contact. They can provide personalized recommendations, detailed pricing, and deployment planning for your institution. Would you like me to direct you there?";
-    }
-
-    return NextResponse.json({ message: response });
+    return NextResponse.json({ message: getKeywordResponse(messages) });
   } catch {
     return NextResponse.json(
       { message: "Sorry, I encountered an error. Please try again." },
