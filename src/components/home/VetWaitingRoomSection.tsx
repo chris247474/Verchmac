@@ -107,9 +107,23 @@ export default function VetWaitingRoomSection() {
   }, [invoiceVisible]);
 
   return (
+    <>
+    <style>{`
+      @keyframes vetFlyUp {
+        0%   { transform: translateY(0);      opacity: 1; }
+        25%  { transform: translateY(-105vh); opacity: 0.6; }
+        50%  { transform: translateY(-105vh); opacity: 0.6; }
+        75%  { transform: translateY(0);      opacity: 1; }
+        100% { transform: translateY(0);      opacity: 1; }
+      }
+      .vet-fly-up {
+        animation: vetFlyUp 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        will-change: transform;
+      }
+    `}</style>
     <section
       ref={sectionRef}
-      className="py-20 lg:py-28 bg-[#F9F5EF] overflow-hidden border-t border-amber-100"
+      className="vet-fly-up py-20 lg:py-28 bg-[#F9F5EF] overflow-hidden border-t border-amber-100"
     >
       <Container>
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
@@ -359,5 +373,6 @@ export default function VetWaitingRoomSection() {
         </div>
       </Container>
     </section>
+    </>
   );
 }
