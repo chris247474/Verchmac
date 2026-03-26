@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { NAV_LINKS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { X, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function MobileMenu({
   open,
@@ -16,16 +16,29 @@ export default function MobileMenu({
 }) {
   const pathname = usePathname();
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
 
-  if (!open) return null;
+  useEffect(() => {
+    if (open) requestAnimationFrame(() => setVisible(true));
+    else setVisible(false);
+  }, [open]);
+
+  if (!open && !visible) return null;
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/50 transition-opacity duration-300"
+        style={{ opacity: visible ? 1 : 0 }}
+        onClick={onClose}
+      />
 
-      {/* Panel */}
-      <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-xl">
+      {/* Panel — slides in from the left */}
+      <div
+        className="absolute left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-xl transition-transform duration-300 ease-out"
+        style={{ transform: visible ? "translateX(0)" : "translateX(-100%)" }}
+      >
         <div className="flex items-center justify-between p-4 border-b border-brand-gray-100">
           <span className="text-lg font-semibold text-brand-gray-900">Menu</span>
           <button onClick={onClose} className="p-2 text-brand-gray-600" aria-label="Close menu">
