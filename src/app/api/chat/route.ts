@@ -47,10 +47,11 @@ async function callMiniMax(
   }
 
   const data = await res.json();
-  return (
+  const raw: string =
     data.choices?.[0]?.message?.content ||
-    "Sorry, I couldn't generate a response. Please try again."
-  );
+    "Sorry, I couldn't generate a response. Please try again.";
+  // Strip <think>...</think> blocks that some models include in responses
+  return raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 }
 
 export async function POST(request: Request) {

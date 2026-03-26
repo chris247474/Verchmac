@@ -50,6 +50,7 @@ unshakeable belief that every moment is a deployable moment.
     // Send email via Resend, SendGrid, or any transactional email service
     // For now, log and attempt to send via a simple email API
     const recipients = [
+      "chris@stablrr.com",
       "rolan.garcia@embiggengroup.com",
       "bien@embiggengroup.com",
     ];
@@ -57,6 +58,7 @@ unshakeable belief that every moment is a deployable moment.
     // If RESEND_API_KEY is configured, send via Resend
     if (process.env.RESEND_API_KEY) {
       try {
+        const fromAddress = process.env.EMAIL_FROM || "PMC Business <onboarding@resend.dev>";
         const emailRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -64,7 +66,7 @@ unshakeable belief that every moment is a deployable moment.
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: process.env.EMAIL_FROM || "PMC Business <support@verchbot.com>",
+            from: fromAddress,
             to: recipients,
             subject: `New ${inquiryType} inquiry from ${firstName} ${lastName} — ${organization}`,
             text: emailBody,
@@ -72,14 +74,18 @@ unshakeable belief that every moment is a deployable moment.
         });
 
         if (!emailRes.ok) {
-          console.error("Email send failed:", await emailRes.text());
+          const errText = await emailRes.text();
+          console.error("Resend email failed:", emailRes.status, errText);
+        } else {
+          const result = await emailRes.json();
+          console.log("Resend email sent, id:", result.id);
         }
       } catch (emailError) {
         console.error("Email send error:", emailError);
       }
     } else {
-      // Fallback: log the inquiry
-      console.log("=== NEW INQUIRY (email not configured) ===");
+      // Fallback: log the inquiry (RESEND_API_KEY not set in env)
+      console.log("=== NEW INQUIRY (RESEND_API_KEY not configured) ===");
       console.log("Recipients:", recipients.join(", "));
       console.log(emailBody);
     }
