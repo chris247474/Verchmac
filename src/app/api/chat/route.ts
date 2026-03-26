@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { CHATBOT_SYSTEM_PROMPT } from "@/lib/constants";
 
+const MINIMAX_API_URL =
+  "https://api.minimax.io/v1/text/chatcompletion_v2";
+const MINIMAX_MODEL = process.env.MINIMAX_MODEL || "MiniMax-M2.5";
+
 const EDUCATION_RESPONSES: Record<string, string> = {
   ipad: "iPad is the perfect device for education! We offer 1:1 iPad programs with Apple School Manager for easy deployment. Our team can help with device configuration, app distribution, and ongoing management. Would you like to speak with an Education Specialist about iPad deployment for your school?",
   mac: "Mac is ideal for creative learning, coding, and advanced education workflows. We support Mac deployments for higher education, faculty, and administrative teams. Want to discuss Mac solutions for your institution?",
@@ -13,19 +17,56 @@ const EDUCATION_RESPONSES: Record<string, string> = {
   default: "Thanks for your interest in our Apple education solutions! I can help with information about iPad and Mac deployments, MDM setup, teacher training, device financing, and more. For detailed pricing or custom solutions, I'd recommend speaking with one of our Education Specialists. Would you like to request a consultation at /contact?",
 };
 
+async function callMiniMax(
+  messages: { role: string; content: string }[]
+): Promise<string> {
+  const res = await fetch(MINIMAX_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.MINIMAX_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: MINIMAX_MODEL,
+      messages: [
+        { role: "system", content: CHATBOT_SYSTEM_PROMPT },
+        ...messages.map((m: { role: string; content: string }) => ({
+          role: m.role,
+          content: m.content,
+        })),
+      ],
+      max_tokens: 1024,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!res.ok) {
+    const errorBody = await res.text();
+    console.error("MiniMax API error:", res.status, errorBody);
+    throw new Error(`MiniMax API returned ${res.status}`);
+  }
+
+  const data = await res.json();
+  return (
+    data.choices?.[0]?.message?.content ||
+    "Sorry, I couldn't generate a response. Please try again."
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const { messages } = await request.json();
-    const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || "";
 
-    // If an LLM API key is configured, use it
-    if (process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY) {
-      // Ready for LLM integration — add API call here
-      // For now, fall through to keyword matching
-      void CHATBOT_SYSTEM_PROMPT;
+    // Use MiniMax if API key is configured
+    if (process.env.MINIMAX_API_KEY) {
+      const reply = await callMiniMax(messages);
+      return NextResponse.json({ message: reply });
     }
 
-    // Keyword-based response matching
+    // Fallback: keyword-based responses when no API key is set
+    const lastMessage =
+      messages[messages.length - 1]?.content?.toLowerCase() || "";
+
     let response = EDUCATION_RESPONSES.default;
     for (const [keyword, reply] of Object.entries(EDUCATION_RESPONSES)) {
       if (keyword !== "default" && lastMessage.includes(keyword)) {
@@ -34,13 +75,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // Check for greeting patterns
     if (/^(hi|hello|hey|good\s*(morning|afternoon|evening))/i.test(lastMessage)) {
       response =
         "Hello! Welcome to Power Mac Center Business. I'm here to help you explore our Apple solutions for education. What would you like to know about? I can discuss iPad programs, Mac deployments, teacher training, device management, and more!";
     }
 
-    // Check for consultation/contact intent
     if (
       lastMessage.includes("consult") ||
       lastMessage.includes("contact") ||
