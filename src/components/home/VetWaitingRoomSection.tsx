@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+// VetStamp (fixed page watermark) is rendered in layout.tsx
 import Container from "../ui/Container";
 
 const INVOICE_LINE_ITEMS = [
@@ -17,9 +18,6 @@ const INVOICE_LINE_ITEMS = [
   { service: "Slide Deck Not Included Convenience Fee", hours: "N/A", rate: "Flat", total: "$1,000" },
 ];
 
-const RISE_MS = 800;
-const REST_MS = 1000;
-const IDLE_MS = 4000;
 
 function InvoiceTable({ allVisible }: { allVisible: boolean }) {
   const [revealed, setRevealed] = useState(0);
@@ -138,15 +136,11 @@ function InvoiceTable({ allVisible }: { allVisible: boolean }) {
 
 export default function VetWaitingRoomSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
   const [invoiceAnimated, setInvoiceAnimated] = useState(false);
-  // overlay: 'hidden' = off-screen below, 'visible' = modal floated up
-  const [overlay, setOverlay] = useState<"hidden" | "visible">("hidden");
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setInView(entry.isIntersecting);
         if (entry.isIntersecting && !invoiceAnimated) setInvoiceAnimated(true);
       },
       { threshold: 0.15 }
@@ -155,62 +149,8 @@ export default function VetWaitingRoomSection() {
     return () => observer.disconnect();
   }, [invoiceAnimated]);
 
-  // Animation cycle — only runs when not in view and overlay is hidden (idle)
-  useEffect(() => {
-    if (inView) {
-      setOverlay("hidden");
-      return;
-    }
-    if (overlay !== "hidden") return;
-
-    const t1 = setTimeout(() => {
-      setOverlay("visible");
-      const t2 = setTimeout(() => {
-        setOverlay("hidden");
-      }, RISE_MS + REST_MS);
-      return () => clearTimeout(t2);
-    }, IDLE_MS);
-
-    return () => clearTimeout(t1);
-  }, [inView, overlay]);
-
-  const isVisible = overlay === "visible";
-
   return (
     <>
-      {/* Floating modal overlay — morphs up from bottom */}
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: "50%",
-          zIndex: 50,
-          width: isVisible ? "min(540px, 92vw)" : "100vw",
-          maxHeight: "85vh",
-          overflowY: "auto",
-          borderRadius: isVisible ? "16px" : "0px",
-          boxShadow: isVisible ? "0 32px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.08)" : "none",
-          transform: isVisible
-            ? "translateX(-50%) translateY(8vh)"
-            : "translateX(-50%) translateY(calc(100vh + 120px))",
-          transition: `transform ${RISE_MS}ms cubic-bezier(0.4,0,0.2,1), width ${RISE_MS}ms cubic-bezier(0.4,0,0.2,1), border-radius ${RISE_MS}ms ease, box-shadow ${RISE_MS}ms ease`,
-          backgroundColor: "#F9F5EF",
-          borderTop: isVisible ? "4px solid #f59e0b" : "none",
-        }}
-      >
-        <div className="px-6 pt-6 pb-4">
-          <span className="inline-block text-[10px] font-bold tracking-[0.2em] uppercase text-amber-600 mb-3">
-            🐶 Important Disclosure
-          </span>
-          <h2 className="text-2xl font-black text-gray-900 leading-tight mb-4">
-            This website was built at{" "}
-            <span className="text-amber-600 italic">the vet.</span>
-          </h2>
-          <InvoiceTable allVisible />
-        </div>
-      </div>
-
-      {/* Real section — static at the bottom, no animation */}
       <section
         ref={sectionRef}
         className="py-20 lg:py-28 bg-[#F9F5EF] border-t border-amber-100"
@@ -276,3 +216,4 @@ export default function VetWaitingRoomSection() {
     </>
   );
 }
+

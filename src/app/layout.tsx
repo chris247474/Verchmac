@@ -4,6 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ChatbotWidget from "@/components/chat/ChatbotWidget";
 import VetWaitingRoomSection from "@/components/home/VetWaitingRoomSection";
+import VetStamp from "@/components/VetStamp";
 
 export const metadata: Metadata = {
   title: {
@@ -38,6 +39,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <VetWaitingRoomSection />
         <Footer />
+        <VetStamp />
         <ChatbotWidget />
       </body>
     </html>
