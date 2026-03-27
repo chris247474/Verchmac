@@ -51,7 +51,7 @@ function InvoiceTable({ allVisible }: { allVisible: boolean }) {
     <div className="relative bg-white shadow-xl border border-gray-200 rounded-sm overflow-hidden">
       {/* Header */}
       <div className="bg-gray-900 text-white px-5 py-4">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-wrap gap-y-2 justify-between items-start">
           <div>
             <p className="text-[9px] tracking-[0.3em] uppercase text-gray-400 mb-0.5">Professional Services Invoice</p>
             <h3 className="text-base font-black tracking-tight">McKINNEY &amp; ASSOCIATES</h3>
@@ -65,13 +65,13 @@ function InvoiceTable({ allVisible }: { allVisible: boolean }) {
         </div>
       </div>
       {/* Client info */}
-      <div className="px-5 py-2 bg-gray-50 border-b border-gray-200 flex justify-between text-[10px]">
-        <div>
+      <div className="px-5 py-2 bg-gray-50 border-b border-gray-200 flex flex-wrap gap-y-2 justify-between text-[10px]">
+        <div className="min-w-0">
           <p className="text-gray-400 uppercase tracking-wider text-[9px]">Bill To</p>
-          <p className="font-bold text-gray-900">Chris V. — Vet Waiting Room, Row 2</p>
+          <p className="font-bold text-gray-900 truncate max-w-[180px] sm:max-w-none">Chris V. — Vet Waiting Room, Row 2</p>
           <p className="text-gray-500">Duration: ~15 min · Interruptions: 1 (LBM)</p>
         </div>
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <p className="text-gray-400 uppercase tracking-wider text-[9px]">Engagement</p>
           <p className="font-bold text-gray-900">VetSite-Alpha</p>
         </div>
@@ -162,11 +162,11 @@ export default function VetWaitingRoomSection() {
               <span className="inline-block text-xs font-bold tracking-[0.2em] uppercase text-amber-600 mb-4">
                 🐶 Important Disclosure
               </span>
-              <h2 className="text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-6">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-6">
                 This website was built at{" "}
                 <span className="text-amber-600 italic">the vet.</span>
               </h2>
-              <div className="text-gray-700 space-y-5 leading-relaxed text-lg">
+              <div className="text-gray-700 space-y-5 leading-relaxed text-base lg:text-lg">
                 <p>
                   While the Power Mac Center enterprise platform you see before you radiates{" "}
                   <em>polished corporate authority</em>, it was conceived, designed, and deployed in

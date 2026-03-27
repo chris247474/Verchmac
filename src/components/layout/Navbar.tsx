@@ -32,6 +32,7 @@ export default function Navbar() {
             width={130}
             height={20}
             priority
+            className="hidden sm:block"
           />
         </Container>
       </div>

@@ -15,9 +15,9 @@ export default function VetStamp() {
     >
       <div
         style={{
-          border: "6px solid #dc2626",
+          border: "clamp(3px, 0.8vw, 6px) solid #dc2626",
           borderRadius: "8px",
-          padding: "14px 28px",
+          padding: "clamp(8px, 2vw, 14px) clamp(14px, 3.5vw, 28px)",
           textAlign: "center",
           color: "#dc2626",
           fontFamily: "'Arial Black', 'Arial Bold', sans-serif",
@@ -25,10 +25,10 @@ export default function VetStamp() {
           whiteSpace: "nowrap",
         }}
       >
-        <div style={{ fontSize: "clamp(22px, 4vw, 42px)", fontWeight: 900, textTransform: "uppercase", lineHeight: 1.1 }}>
+        <div style={{ fontSize: "clamp(14px, 4vw, 42px)", fontWeight: 900, textTransform: "uppercase", lineHeight: 1.1 }}>
           Built at the Vet
         </div>
-        <div style={{ fontSize: "clamp(12px, 2vw, 22px)", fontWeight: 700, marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+        <div style={{ fontSize: "clamp(8px, 2vw, 22px)", fontWeight: 700, marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.12em" }}>
           That&apos;s $10k Please
         </div>
       </div>
